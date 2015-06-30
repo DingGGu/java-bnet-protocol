@@ -1,7 +1,11 @@
+import Hash.DoubleHash;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.*;
+import java.util.Random;
 import java.util.TimeZone;
 
 public class BNetProtocol {
@@ -10,7 +14,8 @@ public class BNetProtocol {
     private BNetInputStream BNInputStream = null;
     private DataOutputStream BNetOutputStream = null;
 
-    private int verByte;
+    private int serverToken = 0;
+    private final int clientToken = Math.abs(new Random().nextInt());
 
     protected Socket makeSocket (String address, int port) throws UnknownHostException, IOException {
         Socket s;
@@ -32,6 +37,8 @@ public class BNetProtocol {
         BNetOutputStream.writeByte(0x01);
 
         System.out.println("Connect to Server");
+
+        BNetAuthInfo();
     }
 
     public void BNetAuthInfo() throws IOException {
@@ -91,14 +98,85 @@ public class BNetProtocol {
                 }
 
                 case SID_PING: {
+                    System.out.println("PONG!");
                     BNetProtocolPacket p = new BNetProtocolPacket(BNetProtocolPacketId.SID_PING);
                     p.writeDWord(is.readDWord());
                     p.sendPacket(BNetOutputStream);
                     break;
                 }
 
+                case SID_AUTH_INFO: {
+                    BNetProtocolPacket p = new BNetProtocolPacket(BNetProtocolPacketId.SID_AUTH_CHECK);
+                    p.writeDWord(clientToken);  // Client Token
+                    p.writeDWord(0x1015019c);   // EXE Version
+                    p.writeDWord(0x1b375294);   // EXE Hash
+                    p.writeDWord(1);            // Number of CD-Keys
+                    p.writeDWord(0);            // Spawn CD-Key
+                    p.writeDWord(0x00000000);
+                    p.writeDWord(0x00000000);
+                    p.writeDWord(0x00000000);
+                    p.writeDWord(0x00000000);
+                    p.writeDWord(0x00000000);
+                    p.writeDWord(0x00000000);
+                    p.writeDWord(0x00000000);
+                    p.writeDWord(0x00000000);
+                    p.writeDWord(0x00000000);
+                    p.writeNTString("war3.exe 03/18/11 20:03:55 471040");
+                    p.writeNTString("Chat");
+                    p.sendPacket(BNetOutputStream);
+                }
+
+                case SID_AUTH_CHECK: {
+                    int result = is.readDWord();
+                    String extraInfo = is.readNTString();
+                    assert (is.available() == 0);
+
+                    if (pr.packetId == BNetProtocolPacketId.SID_AUTH_CHECK) {
+                        if (result != 0) {
+                            switch (result) {
+                                case 0x211:
+                                    System.out.println("BANNED!" + extraInfo);
+                                    break;
+                                default:
+                                    System.out.println("Unknown Error" + Integer.toHexString(result));
+                                    break;
+                                //todo: disconnect socket
+                            }
+                            System.out.println("Disconnect!" + extraInfo);
+                            break;
+                        }
+                        System.out.println("Passed Check Revision");
+                    } else {
+                        if (result != 2) {
+                            //todo: disconnect socket
+                            System.out.println("Failed Version Check!");
+                            break;
+                        }
+                        System.out.println("Passed Check Revision");
+                        sendAuth();
+                    }
+                }
+
+
+
             }
         }
     }
 
+    public void sendAuth() throws Exception {
+        String username = "D";
+        String password = "";
+        int passwordHash[] = DoubleHash.doubleHash(password.toLowerCase(), clientToken, serverToken);
+
+        BNetProtocolPacket p = new BNetProtocolPacket(BNetProtocolPacketId.SID_LOGONRESPONSE2);
+        p.writeDWord(clientToken);
+        p.writeDWord(serverToken);
+        p.writeDWord(passwordHash[0]);
+        p.writeDWord(passwordHash[1]);
+        p.writeDWord(passwordHash[2]);
+        p.writeDWord(passwordHash[3]);
+        p.writeDWord(passwordHash[4]);
+        p.writeNTString(username);
+        p.sendPacket(BNetOutputStream);
+    }
 }
