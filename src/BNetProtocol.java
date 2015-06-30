@@ -6,6 +6,8 @@ import java.util.TimeZone;
 
 
 import Hash.*;
+import util.ByteArray;
+import util.StatString;
 
 public class BNetProtocol {
 
@@ -20,7 +22,7 @@ public class BNetProtocol {
 
     private SRP srp = null;
 
-    protected Socket makeSocket (String address, int port) throws UnknownHostException, IOException {
+    protected Socket makeSocket(String address, int port) throws UnknownHostException, IOException {
         Socket s;
         InetAddress addr = InetAddress.getByName(address);
         s = new Socket(addr, port);
@@ -28,7 +30,8 @@ public class BNetProtocol {
         return s;
     }
 
-    public BNetProtocol() {}
+    public BNetProtocol() {
+    }
 
     public void BNetConnect() throws Exception {
         socket = makeSocket("119.194.195.251", 5004);
@@ -67,10 +70,10 @@ public class BNetProtocol {
         byte magic;
         do {
             magic = BNInputStream.readByte();
-        } while(magic != (byte)0xFF);
+        } while (magic != (byte) 0xFF);
         try {
             return new BNetPacketReader(BNInputStream);
-        } catch(SocketTimeoutException e) {
+        } catch (SocketTimeoutException e) {
             throw new IOException("Unexpected socket timeout while reading packet", e);
         }
     }
@@ -195,7 +198,12 @@ public class BNetProtocol {
                             break;
                     }
                     break;
+                }
 
+                case SID_ENTERCHAT: {
+                    String uniqueUserName = is.readNTString();
+
+                    BNetChat();
                 }
             }
         }
@@ -230,5 +238,50 @@ public class BNetProtocol {
         p.writeDWord(1);
         p.writeNTString("W3");
         p.sendPacket(BNetOutputStream);
+    }
+
+    private void BNetChat() throws Exception {
+        while (!socket.isClosed()) {
+            BNetPacketReader pr;
+            try {
+                pr = obtainPacket();
+            } catch (SocketTimeoutException e) {
+                continue;
+            } catch (SocketException e) {
+                if (socket == null) break;
+                if (socket.isClosed()) break;
+                throw e;
+            }
+
+            BNetInputStream is = pr.getData();
+            switch (pr.packetId) {
+                case SID_CHATEVENT: {
+                    BNetChatEventId eid = BNetChatEventId.values()[is.readDWord()];
+                    int flags = is.readDWord();
+                    int ping = is.readDWord();
+                    is.skip(12);
+                    String username = is.readNTString();
+                    ByteArray data = null;
+                    StatString statstr = null;
+
+                    System.out.println(username+":");
+
+                    switch (eid) {
+                        case EID_SHOWUSER:
+                        case EID_USERFLAGS:
+                        case EID_JOIN:
+                        case EID_LEAVE:
+                        case EID_TALK:
+                        case EID_EMOTE:
+                        case EID_WHISPERSENT:
+                        case EID_WHISPER: {
+                            System.out.println(is.readNTString());
+                            break;
+                        }
+
+                    }
+                }
+            }
+        }
     }
 }
