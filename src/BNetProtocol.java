@@ -5,7 +5,7 @@ import java.util.Random;
 import java.util.TimeZone;
 
 
-import hash.*;
+import Hash.*;
 
 public class BNetProtocol {
 
@@ -119,7 +119,7 @@ public class BNetProtocol {
                     BNetProtocolPacket p = new BNetProtocolPacket(BNetProtocolPacketId.SID_AUTH_CHECK);
                     p.writeDWord(clientToken);  // Client Token
                     p.writeDWord(0x1015019c);   // EXE Version
-                    p.writeDWord(0x1b375294);   // EXE hash
+                    p.writeDWord(0x1b375294);   // EXE Hash
                     p.writeDWord(1);            // Number of CD-Keys
                     p.writeDWord(0);            // Spawn CD-Key
                     p.writeDWord(0x00000000);

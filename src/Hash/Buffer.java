@@ -6,8 +6,6 @@ package Hash;
 
 import java.io.Serializable;
 
-import java.io.Serializable;
-
 /**
  * Buffer.java This class makes it easy for the programmer to create an array of
  * bytes of a specific format. It'll support these major types:<BR>

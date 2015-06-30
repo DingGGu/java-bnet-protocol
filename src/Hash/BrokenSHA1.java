@@ -12,10 +12,10 @@ package Hash;
  */
 public class BrokenSHA1 {
     /**
-     * Calculates the 20 byte hash based on the passed in byte[] data.
+     * Calculates the 20 byte Hash based on the passed in byte[] data.
      *
      * @param hashData
-     *            The data to hash.
+     *            The data to Hash.
      * @return The 20 bytes of hashed data. Note that this array is actually 60
      *         bytes long, but the last 40 bytes should just be ignored.
      */
