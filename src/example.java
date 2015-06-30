@@ -5,7 +5,9 @@ public class example {
     public static void main(String[] args) {
         BNetProtocol bNetProtocol = new BNetProtocol();
         try {
-            bNetProtocol.connect();
+            bNetProtocol.BNetConnect();
+            bNetProtocol.BNetAuthInfo();
+            bNetProtocol.BNetLogin();
         } catch (Exception e) {
             e.printStackTrace();
         }
