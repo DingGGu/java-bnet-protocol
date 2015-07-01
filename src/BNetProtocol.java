@@ -284,4 +284,14 @@ public class BNetProtocol {
             }
         }
     }
+
+    public void sendChatCommand (ByteArray data) {
+        try {
+            BNetProtocolPacket p = new BNetProtocolPacket(BNetProtocolPacketId.SID_CHATCOMMAND);
+            p.writeNTString(data);
+            p.sendPacket(BNetOutputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

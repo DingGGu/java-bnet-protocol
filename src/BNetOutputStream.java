@@ -1,3 +1,5 @@
+import util.ByteArray;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -44,9 +46,9 @@ public class BNetOutputStream extends DataOutputStream {
         writeByte(0);
     }
 
-//    public void writeNTString(ByteArray str) throws IOException {
-//        writeNTString(str.getBytes());
-//    }
+    public void writeNTString(ByteArray str) throws IOException {
+        writeNTString(str.getBytes());
+    }
 
     public void writeNTString(String str) throws IOException {
         writeNTString(str.getBytes());
